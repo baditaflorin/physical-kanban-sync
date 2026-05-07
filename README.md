@@ -1,6 +1,8 @@
 # Physical Kanban Sync
 
-Physical Kanban Sync turns tagged sticky notes on a wall into a browser-based digital Kanban that can be shared with remote teammates.
+![Version](https://img.shields.io/badge/version-0.1.0-0f6f78)
+![License](https://img.shields.io/badge/license-MIT-202124)
+![Deployment](https://img.shields.io/badge/deploy-GitHub%20Pages-3c6fb6)
 
 Live site: https://baditaflorin.github.io/physical-kanban-sync/
 
@@ -8,27 +10,48 @@ Repository: https://github.com/baditaflorin/physical-kanban-sync
 
 Support: https://www.paypal.com/paypalme/florinbadita
 
+Physical Kanban Sync turns AprilTag-labeled sticky notes on a wall into a browser-based digital Kanban with local persistence, peer-to-peer visibility, and optional local WebGPU assistance.
+
+![Physical Kanban Sync screenshot](https://raw.githubusercontent.com/baditaflorin/physical-kanban-sync/main/docs/media/screenshot.png)
+
 ## Quickstart
 
 ```sh
 npm install
 make install-hooks
 make dev
-make build
 make smoke
 ```
 
-## What It Does
+## What Works In V1
 
-- Scans AprilTag 36h11 markers from the browser camera and maps note positions into Kanban columns.
-- Persists board state locally with IndexedDB and syncs peers through Yjs over WebRTC.
-- Offers an optional WebGPU local LLM assistant for board summaries and next-step suggestions.
+- Browser camera scanning through a vendored AprilTag 36h11 WASM detector.
+- Editable sticky-note Kanban with drag/drop, local IndexedDB persistence, JSON backup, and printable tag kit.
+- Yjs + WebRTC room sync loaded on demand.
+- Optional WebGPU local LLM summary using WebLLM, loaded only after pressing Assist.
+- GitHub Pages build in `docs/` with visible version and commit metadata.
 
 ## Architecture
 
-The v1 deployment is a static GitHub Pages application. Runtime compute happens in the browser using camera APIs, a vendored AprilTag WASM detector, IndexedDB, Yjs/WebRTC, and optional WebGPU.
+```mermaid
+flowchart LR
+  Wall["Physical wall<br/>Sticky notes + AprilTags"] --> Phone["Browser camera<br/>phone or laptop"]
+  Phone --> Worker["AprilTag worker<br/>WASM detector"]
+  Worker --> Board["React Kanban<br/>position mapping"]
+  Board --> IDB["IndexedDB<br/>local board"]
+  Board --> Yjs["Yjs document"]
+  Yjs --> WebRTC["WebRTC peers"]
+  Board --> LLM["Optional WebGPU<br/>local LLM"]
+  Pages["GitHub Pages<br/>static files"] --> Phone
+```
 
-See https://github.com/baditaflorin/physical-kanban-sync/tree/main/docs/adr for decision records.
+Architecture docs: https://github.com/baditaflorin/physical-kanban-sync/blob/main/docs/architecture.md
+
+ADRs: https://github.com/baditaflorin/physical-kanban-sync/tree/main/docs/adr
+
+Deploy guide: https://github.com/baditaflorin/physical-kanban-sync/blob/main/docs/deploy.md
+
+Privacy notes: https://github.com/baditaflorin/physical-kanban-sync/blob/main/docs/privacy.md
 
 ## Local Checks
 
@@ -39,3 +62,11 @@ make test
 make build
 make smoke
 ```
+
+## Git Hooks
+
+```sh
+make install-hooks
+```
+
+Hooks live in `.githooks/` and run formatting, linting, TypeScript, tests, Pages build, smoke checks, gitleaks, and Conventional Commit validation locally. There are no GitHub Actions in v1.

@@ -2,6 +2,7 @@ node_modules/
 docs/assets/
 docs/vendor/
 docs/index.html
+docs/*.js
 public/vendor/
 coverage/
 playwright-report/

@@ -1,5 +1,7 @@
 # Security Policy
 
+Disclosure email: baditaflorin@users.noreply.github.com
+
 Please report vulnerabilities privately through GitHub Security Advisories:
 
 https://github.com/baditaflorin/physical-kanban-sync/security/advisories/new
