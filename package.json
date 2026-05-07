@@ -14,6 +14,7 @@
   "homepage": "https://baditaflorin.github.io/physical-kanban-sync/",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
+    "prebuild": "node scripts/clean-pages.mjs",
     "build": "vite build",
     "preview": "vite preview --host 127.0.0.1",
     "typecheck": "tsc --noEmit",

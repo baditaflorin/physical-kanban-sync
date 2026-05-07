@@ -4,7 +4,7 @@ import { createServer } from "node:http";
 import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const port = Number(process.env.PORT ?? 4173);
+const port = Number(process.env.PORT ?? 4317);
 const basePath = "/physical-kanban-sync/";
 const root = join(fileURLToPath(new URL("..", import.meta.url)), "docs");
 

@@ -7,12 +7,12 @@ export default defineConfig({
     timeout: 10_000,
   },
   use: {
-    baseURL: "http://127.0.0.1:4173",
+    baseURL: "http://127.0.0.1:4317",
     trace: "on-first-retry",
   },
   webServer: {
     command: "npm run pages-preview",
-    url: "http://127.0.0.1:4173/physical-kanban-sync/",
+    url: "http://127.0.0.1:4317/physical-kanban-sync/",
     reuseExistingServer: !process.env.CI,
     timeout: 30_000,
   },
