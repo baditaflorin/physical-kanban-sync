@@ -1,0 +1,7 @@
+title = "physical-kanban-sync"
+
+[allowlist]
+description = "Allow committed public project URLs and placeholders"
+paths = [
+  '''package-lock.json''',
+]

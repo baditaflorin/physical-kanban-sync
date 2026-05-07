@@ -1,0 +1,8 @@
+node_modules/
+docs/assets/
+docs/vendor/
+docs/index.html
+public/vendor/
+coverage/
+playwright-report/
+test-results/

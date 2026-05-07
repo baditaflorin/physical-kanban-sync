@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+set -eu
+
+scripts/validate-commit-msg.sh "$1"

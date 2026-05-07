@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+set -eu
+
+echo "Mode A: no generated clients to refresh."

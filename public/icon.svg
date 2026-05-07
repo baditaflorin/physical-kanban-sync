@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Physical Kanban Sync">
+  <rect width="256" height="256" rx="48" fill="#0f6f78"/>
+  <rect x="38" y="42" width="180" height="172" rx="18" fill="#fffdf6"/>
+  <rect x="58" y="66" width="42" height="54" rx="5" fill="#f9d66b"/>
+  <rect x="108" y="66" width="42" height="54" rx="5" fill="#f28aa6"/>
+  <rect x="158" y="66" width="42" height="54" rx="5" fill="#7ed6b2"/>
+  <rect x="58" y="136" width="42" height="54" rx="5" fill="#8ab4f8"/>
+  <rect x="108" y="136" width="42" height="54" rx="5" fill="#f7a35c"/>
+  <rect x="166" y="144" width="24" height="24" fill="#111"/>
+  <rect x="170" y="148" width="16" height="16" fill="#fff"/>
+  <rect x="174" y="152" width="8" height="8" fill="#111"/>
+</svg>
