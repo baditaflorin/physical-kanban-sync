@@ -1,6 +1,7 @@
 import * as Y from "yjs";
 import { WebrtcProvider } from "y-webrtc";
 import { type BoardState, parseBoardState } from "../board/boardTypes";
+import { loadSignalingUrls, refreshTurnCredentials } from "./meshConfig";
 
 export type SyncStatus = {
   roomName: string;
@@ -20,15 +21,19 @@ type SyncSessionOptions = {
   onStatus: (status: SyncStatus) => void;
 };
 
-export function createSyncSession({
+export async function createSyncSession({
   roomName,
   initialBoard,
   onRemoteBoard,
   onStatus,
-}: SyncSessionOptions): SyncSession {
+}: SyncSessionOptions): Promise<SyncSession> {
   const doc = new Y.Doc();
+  // Fetch fresh HMAC TURN credentials so peers behind symmetric NAT have
+  // a working relay from first connect. Falls back to STUN-only on failure.
+  const iceServers = await refreshTurnCredentials();
   const provider = new WebrtcProvider(roomName, doc, {
-    signaling: ["wss://signaling.yjs.dev", "wss://y-webrtc-signaling-eu.herokuapp.com"],
+    signaling: loadSignalingUrls(),
+    peerOpts: { config: { iceServers } },
   });
   const boardMap = doc.getMap<unknown>("board");
   let suppressRemote = false;

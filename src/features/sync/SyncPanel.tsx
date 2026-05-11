@@ -37,7 +37,7 @@ export function SyncPanel({ board, onRemoteBoard }: SyncPanelProps) {
     try {
       const { createSyncSession } = await import("./syncSession");
       sessionRef.current?.destroy();
-      sessionRef.current = createSyncSession({
+      sessionRef.current = await createSyncSession({
         roomName,
         initialBoard: board,
         onRemoteBoard,
