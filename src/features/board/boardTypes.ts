@@ -26,17 +26,30 @@ export const cardSchema = z.object({
   updatedAt: z.string().datetime(),
 });
 
+// columnBoundaries: three breakpoints in [0, 1] that split the wall into
+// four Kanban columns. Defaults to equal quarters. Real walls rarely have
+// equal-width lanes (a "Done" column shrinks under tape, the "Doing" lane
+// widens to absorb in-progress notes) so this must be calibratable.
+export const calibrationSchema = z.object({
+  wallName: z.string(),
+  lastScanAt: z.string().datetime().optional(),
+  lastDetectionCount: z.number().int().min(0),
+  columnBoundaries: z
+    .tuple([
+      z.number().min(0).max(1),
+      z.number().min(0).max(1),
+      z.number().min(0).max(1),
+    ])
+    .default([0.25, 0.5, 0.75]),
+});
+
 export const boardSchema = z.object({
   schemaVersion: z.literal(BOARD_SCHEMA_VERSION),
   boardId: z.string().min(1),
   title: z.string().min(1),
   columns: z.array(columnSchema).length(columnIds.length),
   cards: z.array(cardSchema),
-  calibration: z.object({
-    wallName: z.string(),
-    lastScanAt: z.string().datetime().optional(),
-    lastDetectionCount: z.number().int().min(0),
-  }),
+  calibration: calibrationSchema,
   updatedAt: z.string().datetime(),
 });
 
@@ -165,6 +178,7 @@ export function createSeedBoard(): BoardState {
     calibration: {
       wallName: "Workshop wall",
       lastDetectionCount: 0,
+      columnBoundaries: [0.25, 0.5, 0.75],
     },
     updatedAt: timestamp,
   };

@@ -10,7 +10,11 @@ import {
   parseBoardState,
   type WallDetection,
 } from "./features/board/boardTypes";
-import { applyWallDetections } from "./features/board/boardLogic";
+import {
+  applyWallDetections,
+  calibrateBoundariesFromCards,
+  setColumnBoundaries,
+} from "./features/board/boardLogic";
 import { clearBoard, loadBoard, saveBoard } from "./features/board/storage";
 import { ScannerPanel } from "./features/scanner/ScannerPanel";
 import { TagSheet } from "./features/scanner/TagSheet";
@@ -84,6 +88,21 @@ export function App() {
     const seed = createSeedBoard();
     setBoard(seed);
     setToast("Board reset");
+  }
+
+  function autoCalibrateColumns() {
+    setBoard((current) => {
+      const next = calibrateBoundariesFromCards(current);
+      setToast(
+        `Calibrated columns to ${next.map((value) => Math.round(value * 100)).join(" / ")}%`,
+      );
+      return setColumnBoundaries(current, next);
+    });
+  }
+
+  function resetCalibration() {
+    setBoard((current) => setColumnBoundaries(current, [0.25, 0.5, 0.75]));
+    setToast("Calibration reset to equal quarters");
   }
 
   function exportBoard() {
@@ -190,6 +209,38 @@ export function App() {
                   accept="application/json"
                   onChange={(event) => importBoard(event.currentTarget.files?.[0])}
                 />
+              </section>
+              <section className="panel" aria-labelledby="calibration-title">
+                <div className="panel-heading">
+                  <div>
+                    <p className="eyebrow">Column layout</p>
+                    <h2 id="calibration-title">Calibration</h2>
+                  </div>
+                </div>
+                <p className="muted">
+                  Wall column boundaries (left → right):{" "}
+                  {board.calibration.columnBoundaries
+                    .map((value) => `${Math.round(value * 100)}%`)
+                    .join(" · ")}
+                </p>
+                <div className="button-row">
+                  <button
+                    className="icon-button primary"
+                    type="button"
+                    onClick={autoCalibrateColumns}
+                    title="Auto-calibrate columns from current cards"
+                  >
+                    <span>Auto-calibrate</span>
+                  </button>
+                  <button
+                    className="icon-button"
+                    type="button"
+                    onClick={resetCalibration}
+                    title="Reset to equal quarters"
+                  >
+                    <span>Reset</span>
+                  </button>
+                </div>
               </section>
               <AssistantPanel board={board} />
               <TagSheet cards={board.cards} />

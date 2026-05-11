@@ -10,13 +10,84 @@ import {
   type WallDetection,
 } from "./boardTypes";
 
-export function columnForX(x: number): ColumnId {
+export function columnForX(
+  x: number,
+  boundaries: readonly [number, number, number] = [0.25, 0.5, 0.75],
+): ColumnId {
   const normalized = clamp01(x);
-  const index = Math.min(
-    columnIds.length - 1,
-    Math.floor(normalized * columnIds.length),
-  );
-  return columnIds[index];
+  const safe = sortedBoundaries(boundaries);
+  for (let index = 0; index < safe.length; index += 1) {
+    if (normalized < safe[index]) {
+      return columnIds[index];
+    }
+  }
+  return columnIds[columnIds.length - 1];
+}
+
+/**
+ * Compute fresh column boundaries from the average x of cards already placed
+ * in each column. Used after a user manually arranges a few cards to teach
+ * the wall scanner where the actual column edges live.
+ */
+export function calibrateBoundariesFromCards(
+  board: BoardState,
+): [number, number, number] {
+  const columnAverages = columnIds.map((columnId) => {
+    const cards = board.cards.filter((card) => card.columnId === columnId);
+    if (cards.length === 0) return null;
+    const sum = cards.reduce((total, card) => total + card.x, 0);
+    return sum / cards.length;
+  });
+  const next: [number, number, number] = [0.25, 0.5, 0.75];
+  for (let index = 0; index < 3; index += 1) {
+    const left = columnAverages[index];
+    const right = columnAverages[index + 1];
+    if (left !== null && right !== null) {
+      next[index] = clamp01((left + right) / 2);
+    }
+  }
+  // Force the boundaries into strict ascending order, never collapsing two
+  // columns onto the same boundary (which would make one column unreachable).
+  for (let index = 1; index < next.length; index += 1) {
+    if (next[index] <= next[index - 1]) {
+      next[index] = Math.min(1, next[index - 1] + 0.02);
+    }
+  }
+  return next;
+}
+
+export function setColumnBoundaries(
+  board: BoardState,
+  boundaries: [number, number, number],
+  timestamp = nowIso(),
+): BoardState {
+  const sorted = sortedBoundaries(boundaries);
+  // Re-snap every existing card so a freshly calibrated wall reflows the
+  // current placement on screen without needing another scan.
+  const reflowed = board.cards.map((card) => {
+    const columnId = columnForX(card.x, sorted);
+    return columnId === card.columnId
+      ? card
+      : { ...card, columnId, updatedAt: timestamp };
+  });
+  return {
+    ...board,
+    cards: reflowed,
+    calibration: {
+      ...board.calibration,
+      columnBoundaries: sorted,
+    },
+    updatedAt: timestamp,
+  };
+}
+
+function sortedBoundaries(boundaries: readonly number[]): [number, number, number] {
+  const safe = boundaries.slice(0, 3).map((value) => clamp01(value));
+  safe.sort((a, b) => a - b);
+  while (safe.length < 3) {
+    safe.push(1);
+  }
+  return [safe[0] ?? 0.25, safe[1] ?? 0.5, safe[2] ?? 0.75];
 }
 
 export function applyWallDetections(
@@ -26,10 +97,11 @@ export function applyWallDetections(
 ): BoardState {
   const cardsByTag = new Map(board.cards.map((card) => [card.tagId, card]));
   const nextCards = new Map(board.cards.map((card) => [card.id, card]));
+  const boundaries = board.calibration.columnBoundaries;
 
   for (const detection of detections) {
     const existing = cardsByTag.get(detection.tagId);
-    const columnId = columnForX(detection.x);
+    const columnId = columnForX(detection.x, boundaries);
 
     if (existing) {
       nextCards.set(existing.id, {
@@ -73,7 +145,7 @@ export function moveCardToColumn(
     cardId,
     {
       columnId,
-      x: columnCenter(columnId),
+      x: columnCenter(columnId, board.calibration.columnBoundaries),
       y,
     },
     timestamp,
@@ -138,9 +210,10 @@ export function removeCard(
 }
 
 export function simulateWallPan(board: BoardState, timestamp = nowIso()) {
+  const boundaries = board.calibration.columnBoundaries;
   const detections = board.cards.map((card, index) => ({
     tagId: card.tagId,
-    x: clamp01(columnCenter(card.columnId) + seededJitter(index, 0.035)),
+    x: clamp01(columnCenter(card.columnId, boundaries) + seededJitter(index, 0.035)),
     y: clamp01(0.14 + ((index * 0.19) % 0.74)),
   }));
 
@@ -187,9 +260,15 @@ function nextTagId(cards: KanbanCard[]) {
   return Math.max(0, ...cards.map((card) => card.tagId)) + 1;
 }
 
-function columnCenter(columnId: ColumnId) {
+function columnCenter(
+  columnId: ColumnId,
+  boundaries: readonly [number, number, number] = [0.25, 0.5, 0.75],
+) {
   const index = columnIds.indexOf(columnId);
-  return (index + 0.5) / columnIds.length;
+  if (index === -1) return 0.5;
+  const left = index === 0 ? 0 : boundaries[index - 1];
+  const right = index === columnIds.length - 1 ? 1 : boundaries[index];
+  return clamp01((left + right) / 2);
 }
 
 function seededJitter(seed: number, magnitude: number) {
