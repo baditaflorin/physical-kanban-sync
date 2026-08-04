@@ -28,6 +28,12 @@ export function ScannerPanel({
   useEffect(() => stopCamera, []);
 
   async function startCamera() {
+    // Guard against a leaked previous session: if a stream, worker, or
+    // interval from an earlier startCamera() call is still alive (e.g. the
+    // last run ended in a scan error rather than an explicit Stop), tear it
+    // down before requesting a new one. Otherwise the old MediaStream's
+    // tracks are orphaned — never stopped — and the camera stays hot.
+    stopCamera();
     setScannerState("starting");
     setMessage("Opening camera");
 
@@ -87,6 +93,14 @@ export function ScannerPanel({
         onDetections(detections);
       }
     } catch (error) {
+      // A failed detection (worker crash, WASM init failure, etc.) must not
+      // leave the camera stream, worker, and scan interval running while the
+      // UI reverts to a "Camera" (start) button — that combination is what
+      // leaks the camera: the next click on "Camera" would open a second
+      // getUserMedia stream on top of the still-live first one, whose tracks
+      // are never released. Tear everything down first, then surface the
+      // error state.
+      stopCamera();
       setScannerState("error");
       setMessage(error instanceof Error ? error.message : "Scanner failed");
     }
